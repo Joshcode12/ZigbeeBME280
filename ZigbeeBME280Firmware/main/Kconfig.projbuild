@@ -1,0 +1,37 @@
+menu "ZigbeeBME280"
+
+    config I2C_NUM
+        int "I2C Port Number"
+        default 0
+        range 0 0
+        help
+            The ESP32-C6 typically uses I2C port 0.
+
+    config I2C_MASTER_SCL
+        int "I2C Master SCL GPIO"
+        default 7
+        help
+            GPIO number for the I2C SCL clock line.
+
+    config I2C_MASTER_SDA
+        int "I2C Master SDA GPIO"
+        default 6
+        help
+            GPIO number for the I2C SDA data line.
+
+    config VCNL_INTERRUPT_GPIO
+        int "VCNL4010 Interrupt GPIO" 
+        default 0
+        help
+            GPIO connected to the VCNL4010 INT pin. 
+            On the ESP32-C6, ensure this is an LP_GPIO (0-7) 
+            if you plan to use it as a Deep Sleep wakeup source.
+
+    config OLED_DISABLE_GPIO
+        int "OLED Power Enable GPIO (MOSFET Gate)"
+        default 1
+        help
+            GPIO connected to the Gate of the ZVN2110 MOSFET.
+            Setting this HIGH will ground the OLED and turn it on.
+
+endmenu
