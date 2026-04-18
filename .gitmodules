@@ -1,0 +1,3 @@
+[submodule "ZigbeeBME280Firmware/components/bme280_sensorapi"]
+	path = ZigbeeBME280Firmware/components/bme280_sensorapi
+	url = https://github.com/boschsensortec/BME280_SensorAPI
