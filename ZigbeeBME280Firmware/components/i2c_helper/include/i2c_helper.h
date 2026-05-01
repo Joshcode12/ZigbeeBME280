@@ -1,5 +1,7 @@
+#pragma once
+
 /**
- * @brief Initialize the I2C bus and adds all the devices.
+ * @brief  Initialize the I2C bus.
  */
 void i2c_init(void);
 

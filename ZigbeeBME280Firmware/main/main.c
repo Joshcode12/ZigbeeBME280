@@ -1,4 +1,6 @@
 #include "esp_log.h"
+#include "freertos/idf_additions.h"
+#include "freertos/projdefs.h"
 #include "gpio_helper.h"
 #include "i2c_helper.h"
 
@@ -11,7 +13,10 @@ void app_main(void) {
 
   i2c_init();
 
-  ESP_LOGI(TAG, "Ending...");
+  while (1) {
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
 
   i2c_deinit();
+  ESP_LOGI(TAG, "Ending...");
 }

@@ -1,4 +1,4 @@
-menu "ZigbeeBME280"
+menu "Project Pin Definitions"
 
     config I2C_NUM
         int "I2C Port Number"
@@ -26,12 +26,5 @@ menu "ZigbeeBME280"
             GPIO connected to the VCNL4010 INT pin. 
             On the ESP32-C6, ensure this is an LP_GPIO (0-7) 
             if you plan to use it as a Deep Sleep wakeup source.
-
-    config OLED_DISABLE_GPIO
-        int "OLED Power Enable GPIO (MOSFET Gate)"
-        default 1
-        help
-            GPIO connected to the Gate of the ZVN2110 MOSFET.
-            Setting this HIGH will ground the OLED and turn it on.
 
 endmenu
