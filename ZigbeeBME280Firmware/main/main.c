@@ -13,8 +13,15 @@ void app_main(void) {
 
   i2c_init();
 
+  vTaskDelay(pdMS_TO_TICKS(10));
+
+  float temp, press, hum;
+  bme280_read(bme280_hdl, &temp, &press, &hum);
+  ESP_LOGI(TAG, "Temp: %0.2f, Press: %0.2f, Hum: %0.2f", temp,
+           (float)press / 1000.0f, hum);
+
   while (1) {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 
   i2c_deinit();
