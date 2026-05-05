@@ -116,11 +116,12 @@ static esp_err_t bme280_get_compensation(bme280_handle_t handle) {
   uint8_t data1[26];
   uint8_t data2[7];
 
-  esp_err_t ret = bme280_read_reg(handle, BME280_REG_COMP_1, data1, 26);
+  esp_err_t ret =
+      bme280_read_reg(handle, BME280_REG_COMP_1, data1, sizeof(data1));
   if (ret != ESP_OK)
     return ret;
 
-  ret = bme280_read_reg(handle, BME280_REG_COMP_2, data2, 7);
+  ret = bme280_read_reg(handle, BME280_REG_COMP_2, data2, sizeof(data2));
   if (ret != ESP_OK)
     return ret;
 
@@ -246,8 +247,7 @@ esp_err_t bme280_init(i2c_master_bus_handle_t bus, bme280_config_t *config,
       i2c_master_bus_add_device(bus, &i2c_dev_config, &dev->i2c_dev),
       fail_alloc, TAG, "Failed to add I2C device to bus: %d", ret);
 
-  ESP_GOTO_ON_ERROR(bme280_reset(dev), fail_device, TAG,
-                    "Failed to reset BME280: %d");
+  ESP_GOTO_ON_ERROR(bme280_reset(dev), fail_device, TAG, "Failed to reset");
 
   uint8_t status;
   do {
@@ -268,10 +268,11 @@ esp_err_t bme280_init(i2c_master_bus_handle_t bus, bme280_config_t *config,
 
   while (bme280_busy(dev))
     ;
+
   uint8_t data[3];
-  ESP_GOTO_ON_ERROR(bme280_read_reg(dev, BME280_REG_TEMP_LSB, data,
-                                    sizeof(data) / sizeof(data[0])),
-                    fail_device, TAG, "Failed read the temp");
+  ESP_GOTO_ON_ERROR(
+      bme280_read_reg(dev, BME280_REG_TEMP_LSB, data, sizeof(data)),
+      fail_device, TAG, "Failed read the temp");
 
   // Set the T fine value
   (void)bme280_compensate_temp(dev, (int32_t)(((uint32_t)data[0] << 12) |
@@ -305,7 +306,13 @@ fail_alloc:
 }
 
 esp_err_t bme280_deinit(bme280_handle_t handle) {
-  return i2c_master_bus_rm_device(handle->i2c_dev);
+  if (handle == NULL)
+    return ESP_ERR_INVALID_ARG;
+  ESP_LOGI(TAG, "BME280 deinit...");
+  esp_err_t ret = i2c_master_bus_rm_device(handle->i2c_dev);
+  free(handle);
+  ESP_LOGI(TAG, "BME280 deinit.");
+  return ret;
 }
 
 esp_err_t bme280_read(bme280_handle_t handle, float *temp, float *pres,
@@ -313,7 +320,6 @@ esp_err_t bme280_read(bme280_handle_t handle, float *temp, float *pres,
   if (handle == NULL || temp == NULL || pres == NULL || hum == NULL) {
     return ESP_ERR_INVALID_ARG;
   }
-
   esp_err_t ret;
 
   if (handle->config.mode == BME280_MODE_FORCED) {
@@ -329,8 +335,7 @@ esp_err_t bme280_read(bme280_handle_t handle, float *temp, float *pres,
     ;
 
   uint8_t data[8];
-  ret = bme280_read_reg(handle, BME280_REG_DATA_START, data,
-                        sizeof(data) / sizeof(data[0]));
+  ret = bme280_read_reg(handle, BME280_REG_DATA_START, data, sizeof(data));
   if (ret != ESP_OK)
     return ret;
 

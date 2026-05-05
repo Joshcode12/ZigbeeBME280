@@ -37,12 +37,10 @@ void i2c_init() {
 
   bme280_config_t bme280_cfg = {
       .i2c_addr = BME280_I2C_ADDR_ALT,
-      .mode = BME280_MODE_NORMAL,
-      .press_oversampling = BME280_OVERSAMPLING_X8,
-      .temp_oversampling = BME280_OVERSAMPLING_X8,
-      .hum_oversampling = BME280_OVERSAMPLING_X8,
-      .filter = BME280_FILTER_X2,
-      .standby_time = BME280_STANDBY_500_MS,
+      .mode = BME280_MODE_FORCED,
+      .press_oversampling = BME280_OVERSAMPLING_X1,
+      .temp_oversampling = BME280_OVERSAMPLING_X1,
+      .hum_oversampling = BME280_OVERSAMPLING_X1,
   };
   ESP_ERROR_CHECK(bme280_init(bus_hdl, &bme280_cfg, &bme280_hdl));
 
