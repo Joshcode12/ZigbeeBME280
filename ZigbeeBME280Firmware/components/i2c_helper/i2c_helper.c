@@ -14,6 +14,7 @@ i2c_master_bus_handle_t bus_hdl;
 
 ssd1306_handle_t display_hdl;
 bme280_handle_t bme280_hdl;
+vcnl4010_handle_t vcnl4010_hdl;
 
 void i2c_init() {
   ESP_LOGI(TAG, "I2C initialize starting...");
@@ -44,6 +45,19 @@ void i2c_init() {
   };
   ESP_ERROR_CHECK(bme280_init(bus_hdl, &bme280_cfg, &bme280_hdl));
 
+  vcnl4010_config_t vcnl4010_cfg = {
+      .command = VCNL4010_CMD_SELFTIMED_EN | VCNL4010_CMD_PROX_EN,
+      .ir_led_current = VCNL4010_IR_LED_100MA,
+      .prox_rate = VCNL4010_PROX_RATE_7_81,
+      .als_en = false,
+      .threshold_en = true,
+      .threshold_sel = VNCL4010_THRESH_SEL_PROX,
+      .int_count = VCNL4010_INT_COUNT_2,
+      .high_threshold = 4500,
+      .low_threshold = 0,
+  };
+  ESP_ERROR_CHECK(vcnl4010_init(bus_hdl, &vcnl4010_cfg, &vcnl4010_hdl));
+
   ESP_LOGI(TAG, "I2C initialize done...");
 }
 
@@ -56,10 +70,17 @@ void i2c_deinit() {
 
     ssd1306_clear_display(display_hdl, false);
     ssd1306_delete(display_hdl);
+    display_hdl = NULL;
   }
 
   if (bme280_hdl != NULL) {
     bme280_deinit(bme280_hdl);
+    bme280_hdl = NULL;
+  }
+
+  if (vcnl4010_hdl != NULL) {
+    vcnl4010_deinit(vcnl4010_hdl);
+    vcnl4010_hdl = NULL;
   }
 
   if (bus_hdl != NULL) {

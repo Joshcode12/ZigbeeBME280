@@ -229,13 +229,13 @@ static float bme280_compensate_hum(bme280_handle_t handle, int32_t adc_H) {
 esp_err_t bme280_init(i2c_master_bus_handle_t bus, bme280_config_t *config,
                       bme280_handle_t *handle) {
   esp_err_t ret = ESP_OK;
-  ESP_LOGI(TAG, "Initializing BME280...");
 
   struct bme280_context *dev = calloc(1, sizeof(struct bme280_context));
   if (dev == NULL)
     return ESP_ERR_NO_MEM;
 
   dev->config = *config;
+  ESP_LOGI(TAG, "Initializing BME280...");
 
   const i2c_device_config_t i2c_dev_config = {
       .dev_addr_length = I2C_ADDR_BIT_LEN_7,
@@ -245,7 +245,7 @@ esp_err_t bme280_init(i2c_master_bus_handle_t bus, bme280_config_t *config,
 
   ESP_GOTO_ON_ERROR(
       i2c_master_bus_add_device(bus, &i2c_dev_config, &dev->i2c_dev),
-      fail_alloc, TAG, "Failed to add I2C device to bus: %d", ret);
+      fail_alloc, TAG, "Failed to add I2C device to bus");
 
   ESP_GOTO_ON_ERROR(bme280_reset(dev), fail_device, TAG, "Failed to reset");
 
@@ -259,6 +259,7 @@ esp_err_t bme280_init(i2c_master_bus_handle_t bus, bme280_config_t *config,
   uint8_t id;
   ret = bme280_read_reg(dev, BME280_REG_ID, &id, 1);
   if (ret != ESP_OK || id != BME280_CHIP_ID) {
+    ret = ESP_ERR_INVALID_RESPONSE;
     ESP_LOGE(TAG, "Failed to read BME280 ID: %d", ret);
     goto fail_device;
   }
