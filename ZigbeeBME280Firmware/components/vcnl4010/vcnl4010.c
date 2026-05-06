@@ -3,7 +3,6 @@
 #include "esp_check.h"
 #include "esp_err.h"
 #include "esp_log.h"
-#include "freertos/idf_additions.h"
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -34,6 +33,13 @@ static inline esp_err_t vcnl4010_write_reg(vcnl4010_handle_t handle,
 
   return i2c_master_transmit(handle->i2c_dev, write_buffer,
                              sizeof(write_buffer), -1);
+}
+
+static esp_err_t vcnl4010_reset_interrupt(vcnl4010_handle_t handle) {
+  if (handle == NULL)
+    return ESP_ERR_INVALID_ARG;
+  uint8_t data = 0xFF;
+  return vcnl4010_write_reg(handle, VCNL4010_REG_INT_STATUS, &data, 1);
 }
 
 esp_err_t vcnl4010_init(i2c_master_bus_handle_t bus, vcnl4010_config_t *config,
@@ -183,9 +189,14 @@ esp_err_t vcnl4010_get_proximity(vcnl4010_handle_t handle, uint16_t *value) {
   return ret;
 }
 
-esp_err_t vcnl4010_reset_interrupt(vcnl4010_handle_t handle) {
+esp_err_t vcnl4010_read_int_status(vcnl4010_handle_t handle, uint8_t *status) {
   if (handle == NULL)
     return ESP_ERR_INVALID_ARG;
-  uint8_t data = 0xFF;
-  return vcnl4010_write_reg(handle, VCNL4010_REG_INT_STATUS, &data, 1);
+  return vcnl4010_read_reg(handle, VCNL4010_REG_INT_STATUS, status, 1);
+}
+
+esp_err_t vcnl4010_clear_int_status(vcnl4010_handle_t handle, uint8_t *status) {
+  if (handle == NULL)
+    return ESP_ERR_INVALID_ARG;
+  return vcnl4010_write_reg(handle, VCNL4010_REG_INT_STATUS, status, 1);
 }

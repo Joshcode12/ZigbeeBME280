@@ -1,5 +1,6 @@
 #include "gpio_helper.h"
 #include "driver/gpio.h"
+#include "hal/gpio_types.h"
 #include "sdkconfig.h"
 
 void gpio_init() {
@@ -8,8 +9,7 @@ void gpio_init() {
       .mode = GPIO_MODE_INPUT,
       .pull_down_en = GPIO_PULLDOWN_ENABLE,
       .pull_up_en = GPIO_PULLUP_DISABLE,
-      .intr_type = GPIO_INTR_POSEDGE,
+      .intr_type = GPIO_INTR_NEGEDGE,
   };
-
   ESP_ERROR_CHECK(gpio_config(&input_cfg));
 }

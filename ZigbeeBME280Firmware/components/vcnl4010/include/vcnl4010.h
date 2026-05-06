@@ -153,8 +153,8 @@ typedef struct vcnl4010_context *vcnl4010_handle_t;
 /**
  * @brief  VCNL4010 initialization
  * @param  bus: I2C bus handle
- * @param  *config: VCNL4010 configuration
- * @param  *handle: VCNL4010 handle
+ * @param  config: VCNL4010 configuration
+ * @param  handle: VCNL4010 handle
  * @retval ESP Error code
  */
 esp_err_t vcnl4010_init(i2c_master_bus_handle_t bus, vcnl4010_config_t *config,
@@ -170,7 +170,7 @@ esp_err_t vcnl4010_deinit(vcnl4010_handle_t handle);
 /**
  * @brief  VCNL4010 get ambient value
  * @param  handle: VCNL4010 handle
- * @param  *value: VCNL4010 ambient value
+ * @param  value: VCNL4010 ambient value
  * @retval ESP Error code
  */
 esp_err_t vcnl4010_get_ambient(vcnl4010_handle_t handle, uint16_t *value);
@@ -178,14 +178,23 @@ esp_err_t vcnl4010_get_ambient(vcnl4010_handle_t handle, uint16_t *value);
 /**
  * @brief  VCNL4010 get proximity value
  * @param  handle: VCNL4010 handle
- * @param  *value: VCNL4010 proximity value
+ * @param  value: VCNL4010 proximity value
  * @retval ESP Error code
  */
 esp_err_t vcnl4010_get_proximity(vcnl4010_handle_t handle, uint16_t *value);
 
 /**
- * @brief  VCNL4010 reset interrupts
+ * @brief  Get the current interrupt flags
  * @param  handle: VCNL4010 handle
+ * @param  status: VCNL4010 proximity interrupt status
  * @retval ESP Error code
  */
-esp_err_t vcnl4010_reset_interrupt(vcnl4010_handle_t handle);
+esp_err_t vcnl4010_read_int_status(vcnl4010_handle_t handle, uint8_t * status);
+
+/**
+ * @brief  Clear the given interrupt flags
+ * @param  handle: VCNL4010 handle
+ * @param  status: VCNL4010 proximity interrupt status
+ * @retval ESP Error code
+ */
+esp_err_t vcnl4010_clear_int_status(vcnl4010_handle_t handle, uint8_t * status);
