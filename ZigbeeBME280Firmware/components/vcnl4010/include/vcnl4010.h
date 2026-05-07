@@ -40,12 +40,14 @@
 
 ESP_EVENT_DECLARE_BASE(VCNL4010_EVENTS);
 
+// --- Interrupt events ---
 typedef enum vcnl4010_event {
   VCNL4010_EVENT_THR_HI = (1 << 0), // 0x01
   VCNL4010_EVENT_THR_LO = (1 << 1), // 0x02
   VCNL4010_EVENT_ALS = (1 << 2),    // 0x04
   VCNL4010_EVENT_PROX = (1 << 3),   // 0x08
 } vcnl4010_event_t;
+
 // --- Command register bits (0x80) ---
 typedef enum vcnl4010_cmd {
   VCNL4010_CMD_SELFTIMED_EN = (1 << 0),  // enable self-timed measurements

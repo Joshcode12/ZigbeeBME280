@@ -12,15 +12,19 @@
 
 static const char *TAG = "Zigbee BME280";
 
+static TaskHandle_t ui_task_hdl = NULL;
+static uint32_t screen_on_time_ms = 10000;
+
 static ssd1306_handle_t display_hdl;
 static bme280_handle_t bme280_hdl;
 static vcnl4010_handle_t vcnl4010_hdl;
 
 static esp_err_t add_i2c_devices(void);
-static void remove_i2c_devices(void);
 
 static void vcnl_event_handler(void *handler_args, esp_event_base_t base,
                                int32_t id, void *event_data);
+
+static void ui_application_task(void *pvParameters);
 
 void app_main(void) {
   ESP_LOGI(TAG, "Staring...");
@@ -30,26 +34,14 @@ void app_main(void) {
   esp_event_loop_create_default();
 
   ESP_ERROR_CHECK(esp_event_handler_instance_register(
-      VCNL4010_EVENTS,     // The Event Base
-      ESP_EVENT_ANY_ID,    // Listen for ALL IDs (Hit and Clear)
-      &vcnl_event_handler, // The function to call
-      NULL,                // Optional: pass data to the handler
-      NULL                 // Optional: handle for the registration itself
-      ));
+      VCNL4010_EVENTS, ESP_EVENT_ANY_ID, &vcnl_event_handler, NULL, NULL));
+
   ESP_ERROR_CHECK(add_i2c_devices());
+
+  xTaskCreate(ui_application_task, "ui_task", 4096, NULL, 5, &ui_task_hdl);
 
   ESP_ERROR_CHECK(
       vcnl4010_interrupt_init(vcnl4010_hdl, CONFIG_VCNL_INTERRUPT_GPIO, false));
-
-  while (1) {
-    vTaskDelay(pdMS_TO_TICKS(500));
-  }
-
-  remove_i2c_devices();
-
-  i2c_deinit();
-
-  ESP_LOGI(TAG, "Ending...");
 }
 
 static esp_err_t add_i2c_devices(void) {
@@ -61,13 +53,14 @@ static esp_err_t add_i2c_devices(void) {
                       "Failed to clear the screen");
   ESP_RETURN_ON_ERROR(ssd1306_set_contrast(display_hdl, 0xff), TAG,
                       "Failed to set the screen contrast");
-  ESP_RETURN_ON_ERROR(ssd1306_disable_display(display_hdl), TAG, "Failed sleep the ssd1306 display");
+  ESP_RETURN_ON_ERROR(ssd1306_disable_display(display_hdl), TAG,
+                      "Failed sleep the ssd1306 display");
 
   bme280_config_t bme280_cfg = {
       .i2c_addr = BME280_I2C_ADDR_ALT,
       .mode = BME280_MODE_FORCED,
-      .press_oversampling = BME280_OVERSAMPLING_X1,
-      .temp_oversampling = BME280_OVERSAMPLING_X1,
+      .press_oversampling = BME280_OVERSAMPLING_X2,
+      .temp_oversampling = BME280_OVERSAMPLING_X2,
       .hum_oversampling = BME280_OVERSAMPLING_X1,
   };
   ESP_RETURN_ON_ERROR(bme280_init(bus_hdl, &bme280_cfg, &bme280_hdl), TAG,
@@ -99,29 +92,56 @@ static esp_err_t add_i2c_devices(void) {
   return ESP_OK;
 }
 
-static void remove_i2c_devices(void) {
-  if (display_hdl != NULL) {
-    ssd1306_clear_display(display_hdl, false);
-    ssd1306_delete(display_hdl);
-    display_hdl = NULL;
-  }
-
-  if (bme280_hdl != NULL) {
-    bme280_deinit(bme280_hdl);
-    bme280_hdl = NULL;
-  }
-
-  if (vcnl4010_hdl != NULL) {
-    vcnl4010_deinit(vcnl4010_hdl);
-    vcnl4010_hdl = NULL;
-  }
-}
-
 static void vcnl_event_handler(void *handler_args, esp_event_base_t base,
                                int32_t id, void *event_data) {
   switch (id) {
   case VCNL4010_EVENT_THR_HI:
-    ESP_LOGI(TAG, "Got a vcnl4010 high threshold value");
+    if (ui_task_hdl != NULL) {
+      xTaskNotifyGive(ui_task_hdl);
+    }
     break;
+  }
+}
+
+static void ui_application_task(void *pvParameters) {
+  while (1) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    ESP_LOGI(TAG, "Waking up display...");
+    ssd1306_enable_display(display_hdl);
+
+    const uint32_t update_interval_ms = 250;
+    uint32_t elapsed_ms = 0;
+
+    while (elapsed_ms < screen_on_time_ms) {
+      float temp, press, hum;
+      if (bme280_read(bme280_hdl, &temp, &press, &hum) == ESP_OK) {
+        char buf[17];
+        (void)ssd1306_display_text(display_hdl, 1, "Current Readings", false);
+
+        (void)snprintf(buf, sizeof(buf), "Temp: %.1fC", temp);
+        (void)ssd1306_display_text(display_hdl, 2, buf, false);
+
+        (void)snprintf(buf, sizeof(buf), "Hum:  %.1f%%", hum);
+        (void)ssd1306_display_text(display_hdl, 3, buf, false);
+
+        (void)snprintf(buf, sizeof(buf), "Pres: %.2fkPa", press / 1000);
+        (void)ssd1306_display_text(display_hdl, 4, buf, false);
+      }
+
+      vTaskDelay(pdMS_TO_TICKS(update_interval_ms));
+      elapsed_ms += update_interval_ms;
+
+      if (ulTaskNotifyTake(pdTRUE, 0) > 0) {
+        elapsed_ms = 0;
+        ESP_LOGD(TAG, "Screen timer reset due to new proximity trigger");
+      }
+    }
+
+    ESP_LOGI(TAG, "Sleeping display...");
+    ssd1306_clear_display(display_hdl, false);
+    ssd1306_disable_display(display_hdl);
+
+    ulTaskNotifyTake(pdTRUE, 0);
   }
 }
