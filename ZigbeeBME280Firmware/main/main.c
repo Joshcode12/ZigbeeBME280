@@ -59,8 +59,8 @@ static esp_err_t add_i2c_devices(void) {
   bme280_config_t bme280_cfg = {
       .i2c_addr = BME280_I2C_ADDR_ALT,
       .mode = BME280_MODE_FORCED,
-      .press_oversampling = BME280_OVERSAMPLING_X2,
-      .temp_oversampling = BME280_OVERSAMPLING_X2,
+      .press_oversampling = BME280_OVERSAMPLING_X1,
+      .temp_oversampling = BME280_OVERSAMPLING_X1,
       .hum_oversampling = BME280_OVERSAMPLING_X1,
   };
   ESP_RETURN_ON_ERROR(bme280_init(bus_hdl, &bme280_cfg, &bme280_hdl), TAG,
@@ -70,7 +70,7 @@ static esp_err_t add_i2c_devices(void) {
       .enable_proximity = true,
       .enable_als = false,
       .ir_led_current = VCNL4010_IR_LED_150MA,
-      .prox_rate = VCNL4010_PROX_RATE_31_25,
+      .prox_rate = VCNL4010_PROX_RATE_16_63,
       .als =
           {
               .continuous_mode = false,
